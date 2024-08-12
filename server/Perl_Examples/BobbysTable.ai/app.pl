@@ -161,6 +161,23 @@ my $function = {
 				    active => "true",
 			    },
     },
+    call_manager =>  { function => \&call_manager,
+			     signature => {
+				 function => "call_manager",
+				 argument => {
+				     properties => {
+					 customer_phone => {
+					     type => "string",
+					     description => "The users phone number in e.164 format",
+					 },
+				     },
+				     required => ["customer_phone"],
+				     type => "object",
+				 },
+				 purpose => "Speak to the manager",
+				 active => "true",
+			     },
+    },
 };
 
 
@@ -611,6 +628,28 @@ sub create_reservation {
     $res->content_type('application/json');
 
     $res->body(  $swml->swaig_response_json( { response=> $response->{response} } ) );
+
+    return $res->finalize;
+}
+
+sub call_manager {
+    my $data	  = shift;
+    my $post_data = shift;
+    my $env       = shift;
+    my $req       = Plack::Request->new( $env );
+    my $swml      = SignalWire::ML->new;
+    my $json      = JSON::PP->new->ascii->pretty->allow_nonref;
+    my $res       = Plack::Response->new( 200 );
+
+    my $response = {};
+
+	$response->{response} = "Ok, I will transfer the call to our manager now. One moment.";
+
+    # Preparing JSON response
+    $res->content_type('application/json');
+    $res->body(  $swml->swaig_response_json( { response=> $response->{response}, action => [ { back_to_back_functions => "true"} ] } )  );
+
+	$swml->add_application( "main", "connect" => { to => "+14234684041"} );
 
     return $res->finalize;
 }
